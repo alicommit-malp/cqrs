@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>Command and Query Responsibility Segregation core </Title>
+    <Authors>Ali Alp</Authors>
+    <Description>Provide core RabbitMq service bus functionality working with the cqrs.core</Description>
+    <Copyright>null</Copyright>
+    <License>MIT</License>
+    <PackageProjectUrl>https://github.com/alicommit-malp/cqrs</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/alicommit-malp/cqrs/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/alicommit-malp/cqrs</RepositoryUrl>
+    <RepositoryType>github</RepositoryType>
+    <PackageTags>CQRS, RabbitMq, Service Bus, Design Patterns</PackageTags>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="RabbitMQ.Client" Version="6.1.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\cqrs.core\cqrs.core.csproj" />
+  </ItemGroup>
+
+</Project>
