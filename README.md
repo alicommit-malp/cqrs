@@ -10,13 +10,7 @@ Perquisite:
 
 When it comes to the enterprise architecture, picking the right technology is the most tricky part and must be taken by the software architect of the team. To make the microservice work properly you need a good service bus architecture. The service architecture is very simple but in the same time the backbone of the inter-communication of the microservices. 
 
-Add the following configuration in your **appSettings.json**
-
-```json
-{
-    "cqrs_rabbitMq_host": "localhost"
-}
-``` 
+## Usage
 
 ```c#
 public void ConfigureServices(IServiceCollection services)
@@ -30,7 +24,17 @@ public void ConfigureServices(IServiceCollection services)
         var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
         return new RabbitMQBus(sp.GetService<IMediator>(), scopeFactory);
     });
-    
+
     //...
 }
 ```
+### Issue a Command 
+
+### Receive the Command 
+
+### Issue an Event
+
+### Receive the Event 
+
+
+

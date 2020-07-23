@@ -24,11 +24,11 @@ namespace cqrs.rabbitMq.infra.rabbitMq
         private readonly IRabbitConnectionService _rabbitConnectionService;
 
         public RabbitMQBus(IMediator mediator, IServiceScopeFactory serviceScopeFactory,
-            IRabbitConnectionService rabbitConnectionService)
+            IRabbitConnectionService rabbitConnectionService = null)
         {
             _mediator = mediator;
             _scopeFactory = serviceScopeFactory;
-            _rabbitConnectionService = rabbitConnectionService ?? new RabbitMqDefaultConnectionService(); 
+            _rabbitConnectionService = rabbitConnectionService ?? new RabbitMqDefaultConnectionService();
             _handlers = new Dictionary<string, List<Type>>();
             _eventTypes = new List<Type>();
         }
