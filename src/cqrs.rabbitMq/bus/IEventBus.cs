@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
-using cqrs.core.commands;
-using cqrs.core.events;
+using cqrs.rabbitMq.commands;
+using cqrs.rabbitMq.events;
 
-namespace cqrs.core.bus
+namespace cqrs.rabbitMq.bus
 {
     public interface IEventBus
     {

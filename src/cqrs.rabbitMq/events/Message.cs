@@ -1,6 +1,6 @@
 ﻿﻿using MediatR;
 
- namespace cqrs.core.events
+ namespace cqrs.rabbitMq.events
 {
     public abstract class Message : IRequest<bool>
     {

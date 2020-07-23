@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using cqrs.core.bus;
-using cqrs.core.commands;
-using cqrs.core.events;
+using cqrs.rabbitMq.bus;
+using cqrs.rabbitMq.commands;
+using cqrs.rabbitMq.events;
 using MediatR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace cqrs.rabbitMq
+namespace cqrs.rabbitMq.infra.rabbitMq
 {
     // ReSharper disable once InconsistentNaming
     public sealed class RabbitMQBus : IEventBus
@@ -21,14 +20,15 @@ namespace cqrs.rabbitMq
         private readonly IMediator _mediator;
         private readonly Dictionary<string, List<Type>> _handlers;
         private readonly List<Type> _eventTypes;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly IConfiguration _configuration;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IRabbitConnectionService _rabbitConnectionService;
 
-        public RabbitMQBus(IMediator mediator, IServiceScopeFactory serviceScopeFactory, IConfiguration configuration)
+        public RabbitMQBus(IMediator mediator, IServiceScopeFactory serviceScopeFactory,
+            IRabbitConnectionService rabbitConnectionService)
         {
             _mediator = mediator;
-            _serviceScopeFactory = serviceScopeFactory;
-            _configuration = configuration;
+            _scopeFactory = serviceScopeFactory;
+            _rabbitConnectionService = rabbitConnectionService ?? new RabbitMqDefaultConnectionService(); 
             _handlers = new Dictionary<string, List<Type>>();
             _eventTypes = new List<Type>();
         }
@@ -40,7 +40,8 @@ namespace cqrs.rabbitMq
 
         public void Publish<T>(T @event) where T : Event
         {
-            var factory = new ConnectionFactory() {HostName = _configuration["service_bus_rabbit_mq_host"]};
+            var factory = _rabbitConnectionService.CreatePublishingConnection();
+
             using var connection = factory.CreateConnection();
             using var channel = connection.CreateModel();
             var eventName = @event.GetType().Name;
@@ -73,7 +74,7 @@ namespace cqrs.rabbitMq
             if (_handlers[eventName].Any(s => s == handlerType))
             {
                 throw new ArgumentException(
-                    $"Handler Type {handlerType.Name} already is registered for '{eventName}'", nameof(handlerType));
+                    $"Handler Type {handlerType.Name} already is registered with '{eventName}'", nameof(handlerType));
             }
 
             _handlers[eventName].Add(handlerType);
@@ -83,33 +84,29 @@ namespace cqrs.rabbitMq
 
         private void StartBasicConsume<T>() where T : Event
         {
-            var factory = new ConnectionFactory()
-            {
-                HostName = _configuration["service_bus_rabbit_mq_host"],
-                DispatchConsumersAsync = true
-            };
+            var connectionFactory = _rabbitConnectionService.CreateConsumingConnection();
 
-            var connection = factory.CreateConnection();
+            var connection = connectionFactory.CreateConnection();
             var channel = connection.CreateModel();
 
             var eventName = typeof(T).Name;
 
             channel.QueueDeclare(eventName, false, false, false, null);
 
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.Received += Consumer_Received;
+            var eventingBasicConsumer = new AsyncEventingBasicConsumer(channel);
+            eventingBasicConsumer.Received += Consumer_Received;
 
-            channel.BasicConsume(eventName, true, consumer);
+            channel.BasicConsume(eventName, true, eventingBasicConsumer);
         }
 
         private async Task Consumer_Received(object sender, BasicDeliverEventArgs e)
         {
-            var eventName = e.RoutingKey;
+            var routingKey = e.RoutingKey;
             var message = Encoding.UTF8.GetString(e.Body.ToArray());
 
             try
             {
-                await ProcessEvent(eventName, message).ConfigureAwait(false);
+                await ProcessEvent(routingKey, message).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -121,18 +118,18 @@ namespace cqrs.rabbitMq
         {
             if (_handlers.ContainsKey(eventName))
             {
-                using var scope = _serviceScopeFactory.CreateScope();
+                using var serviceScope = _scopeFactory.CreateScope();
                 var subscriptions = _handlers[eventName];
                 foreach (var subscription in subscriptions)
                 {
-                    var handler = scope.ServiceProvider.GetService(subscription);
-                    if (handler == null) continue;
+                    var service = serviceScope.ServiceProvider.GetService(subscription);
+                    if (service == null) continue;
                     var eventType = _eventTypes.SingleOrDefault(t => t.Name == eventName);
                     var @event =
                         JsonConvert.DeserializeObject(message, eventType ?? throw new InvalidOperationException());
-                    var concreteType = typeof(IEventHandler<>).MakeGenericType(eventType);
+                    var genericType = typeof(IEventHandler<>).MakeGenericType(eventType);
                     // ReSharper disable once PossibleNullReferenceException
-                    await (Task) concreteType.GetMethod("Handle")?.Invoke(handler, new[] {@event});
+                    await (Task) genericType.GetMethod("Handle")?.Invoke(service, new[] {@event});
                 }
             }
         }

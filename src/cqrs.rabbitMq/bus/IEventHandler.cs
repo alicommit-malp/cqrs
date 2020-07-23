@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using cqrs.core.events;
+using cqrs.rabbitMq.events;
 
-namespace cqrs.core.bus
+namespace cqrs.rabbitMq.bus
 {
     public interface IEventHandler<in TEvent> : IEventHandler
         where TEvent : Event

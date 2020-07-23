@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Title>Command and Query Responsibility Segregation core </Title>
@@ -14,14 +13,16 @@
     <RepositoryUrl>https://github.com/alicommit-malp/cqrs</RepositoryUrl>
     <RepositoryType>github</RepositoryType>
     <PackageTags>CQRS, RabbitMq, Service Bus, Design Patterns</PackageTags>
+    <TargetFrameworks>netstandard2.0;netcoreapp3.1</TargetFrameworks>
+    <PackageVersion>1.0.1</PackageVersion>
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="MediatR" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.6" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="RabbitMQ.Client" Version="6.1.0" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Include="..\cqrs.core\cqrs.core.csproj" />
   </ItemGroup>
 
 </Project>

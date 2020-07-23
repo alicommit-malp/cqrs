@@ -1,21 +1,20 @@
-﻿using System;
-using cqrs.core.events;
+﻿﻿using System;
 
-namespace cqrs.core.commands
+ namespace cqrs.rabbitMq.events
 {
-    public abstract class Command : Message
+    public abstract class Event
     {
         private Guid Id { get; }
 
         private DateTime CreationDate { get; }
 
-        protected Command()
+        protected Event()
         {
             Id = Guid.NewGuid();
             CreationDate = DateTime.UtcNow;
         }
 
-        protected Command(Guid id, DateTime createDate)
+        protected Event(Guid id, DateTime createDate)
         {
             Id = id;
             CreationDate = createDate;
